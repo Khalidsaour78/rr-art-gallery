@@ -1,45 +1,47 @@
-import './App.css';
-import { useSelector, useDispatch, connect } from 'react-redux'
-import { clearData, fetchData, incrementId, decrementId, inputId } from './features/dataSlice'
-import { useEffect } from 'react';
+import { useState, useEffect, connect } from "react-redux";
+import "./App.css";
+import Gallery from "./Gallery";
+import ButtonBar from "./ButtonBar";
 
-function App(props) {
-  const dispatch = useDispatch()
-  const data = useSelector((state) => state.data)
 
-  const renderImg = () => {
-    if(data.apiData) {
-      return <img style={{'width': '100vw'}} src={data.apiData.primaryImage} alt={data.apiData.title} />
-    } else {
-      return <p>image here</p>
-    }
-  }
+function App() {
+  let [data, setData] = useState({});
+  let [artId, setArtId] = useState(12720);
+
+  useEffect(() => {
+    document.title = "Welcome to ArtWorld";
+    fetch(
+      `https://collectionapi.metmuseum.org/public/collection/v1/objects/${artId}`
+    )
+      .then((response) => response.json())
+      .then((resData) => setData(resData));
+  }, [artId]);
+
+  const handleIterate = (e) => {
+    setArtId(artId + Number(e.target.value));
+  };
 
   useEffect(() => {
     dispatch(fetchData())
-  }, [props.objectId, dispatch])
-
+  }, [props.objectId, dispatch])  
 
   return (
-    <div className="App">
+    <div>
+      <Gallery
+        objectImg={data.primaryImage}
+        artist={data.artistDisplayName}
+        title={data.title}
+      />
       <div>
-        <button onClick={() => dispatch(fetchData())}>Thunk!</button>
-        <button onClick={() => dispatch(clearData())}>Clear</button>
-        <button onClick={() => dispatch(incrementId())}>Next</button>
-        <button onClick={() => dispatch(decrementId())}>Back</button>
-      </div>
-      <input value={ data.objectId } onChange={(e) => {
-        dispatch(inputId(Number(e.target.value)))
-      }} />
-      <div>
-        {data.objectId}
-        {renderImg()}
+        <ButtonBar handleIterate={handleIterate} />
       </div>
     </div>
   );
 }
 
-
-const mapStateToProps = (state, ownProps) => ({ objectId: state.data.objectId })
+const mapStateToProps = (state) => ({
+  objectId: state.data.objectId
+})
 
 export default connect(mapStateToProps)(App);
+
